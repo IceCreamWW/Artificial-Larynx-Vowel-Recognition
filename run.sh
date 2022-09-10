@@ -78,7 +78,7 @@ if [ $stage -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 fi
 
 if [ $stage -le 3 ] && [ ${stop_stage} -ge 3 ]; then
-    echo "Stage 3: Collecting stats ..."
+    echo "Stage 3: collecting results ..."
     rm -f exp/$model/best.scp exp/$model/last.scp
     for d in exp/$model/*; do 
         if ! [ -f $d/train.log  ] || ! grep -q -i "best valid" $d/train.log; then 
@@ -97,9 +97,21 @@ if [ $stage -le 3 ] && [ ${stop_stage} -ge 3 ]; then
 fi
 
 if [ $stage -le 4 ] && [ ${stop_stage} -ge 4 ]; then
+    echo "Stage 4: test with the best checkpoint"
     seed=`sort -k2 -nr exp/$model/best.scp | head -n 1 | awk '{print $1}'`
     best_acc_ckpt_path=`find exp/$model -name "*seed_$seed"`/valid.acc.best.pth
     echo "Testing with best acc checkpoint path: ${best_acc_ckpt_path}"
     ${python} test.py --model $model --ckpt-path ${best_acc_ckpt_path} --data-root $datadir
+fi
+
+if [ $stage -le 5 ] && [ ${stop_stage} -ge 5 ]; then
+    echo "Stage 5: clean model directory"
+    for d in exp/$model/*; do 
+        if ! [ -f $d/train.log  ] || ! grep -q -i "best valid" $d/train.log; then 
+            echo "removing $d"
+            rm -rf $d
+        fi
+    done
+    echo "cleaned model directory exp/$model"
 fi
 

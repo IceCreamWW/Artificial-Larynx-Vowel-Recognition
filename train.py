@@ -35,10 +35,12 @@ class Finetune:
         build_model_func = torchvision.models.__dict__[model_name]
         model = build_model_func(pretrained=True)
 
-        if model_name.startswith("resnet"):
+        if model_name.startswith("resnet") or model_name.startswith("resnext") :
             model.fc = nn.Linear(model.fc.in_features, 5)
         elif model_name.startswith("densenet"):
             model.classifier = nn.Linear(model.classifier.in_features, 5)
+        elif model_name.startswith("vgg"):
+            model.classifier[-1] = nn.Linear(model.classifier[-1].in_features, 5)
         else:
             raise NotImplementedError(f"finetuning model ${model_name} is not supported")
         return model
@@ -121,7 +123,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="finetune pretrained model for vowel recognition")
     parser.add_argument("--data-root", type=str, required=True, help="path to data dir")
     parser.add_argument("--expdir", type=str, required=True, help="path to save model and logs")
-    parser.add_argument("--model", type=str, default="resnet18", choices=["resnet18","densenet161"])
+    parser.add_argument("--model", type=str, default="resnet18", choices=["resnet18", "resnext50_32x4d","densenet161", "vgg16"])
     parser.add_argument("--max-epochs", type=int, default=20)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
@@ -132,7 +134,7 @@ if __name__ == "__main__":
     logging.info(f"seed = {args.seed}")
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
-    torch.use_deterministic_algorithms(True)
+    torch.use_deterministic_algorithms(True, warn_only=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     finetune = Finetune(data_root=args.data_root, expdir=args.expdir, model_name=args.model, device=device)
