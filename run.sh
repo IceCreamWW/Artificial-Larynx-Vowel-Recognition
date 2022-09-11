@@ -44,7 +44,7 @@ model="resnet18" # resnet18 resnet50 densenet161
 . utils/parse_options.sh
 
 if [ -z $datadir ]; then
-    datadir=data/fs${fs}_fmin${fmin}_fmax${fmax}_n_mels${n_mels}_win${win_length}_hop${hop_length}_nfft${n_fft}_size${img_size}
+    datadir=data/fs${fs}_fmin${fmin}_fmax${fmax}_nmels${n_mels}_win${win_length}_hop${hop_length}_nfft${n_fft}_size${img_size}
 fi
 
 if [ $stage -le 1 ] && [ ${stop_stage} -ge 1 ]; then
@@ -81,8 +81,7 @@ if [ $stage -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     echo "Stage 3: collecting results ..."
     rm -f exp/$model/best.scp exp/$model/last.scp
     for d in exp/$model/*; do 
-        if ! [ -f $d/train.log  ] || ! grep -q -i "best valid" $d/train.log; then 
-            # echo $d;
+        if [ -d $d ] && (! [ -f $d/train.log  ] || ! grep -q -i "best valid" $d/train.log); then 
             continue
         fi
         grep -i -E "(best valid)|(seed =)" $d/train.log | cut -d" " -f3- | tr '\n' ' ' | awk '{print $3,$NF}' >> exp/$model/best.scp
@@ -107,7 +106,7 @@ fi
 if [ $stage -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     echo "Stage 5: clean model directory"
     for d in exp/$model/*; do 
-        if ! [ -f $d/train.log  ] || ! grep -q -i "best valid" $d/train.log; then 
+        if [ -d $d ] && (! [ -f $d/train.log  ] || ! grep -q -i "best valid" $d/train.log); then 
             echo "removing $d"
             rm -rf $d
         fi
